@@ -1,8 +1,19 @@
 #!/usr/bin/perl
 
-open (IN, "$ARGV[0]")
-         or die "Failed to open file: '$ARGV[0]'\n";
+$lat;   # Latitude
+$lon;   # Longitude
+$ele;   # Elevation
+$time;  # Time/Date
 
+# Open input
+open (IN, "$ARGV[0]")
+        or die "Failed to open file: '$ARGV[0]'\n";
+
+# Open output
+# $ARGV[0] =~ /^.+\./;
+# $fname = "$1\.gpx";
+# open ($fh, $fname)
+#         or die "Failed to create file '$fname'\n"; 
 while (<IN>) {
         $line = $_;
         @t = split / /, $line;  # Split off Date/Time info
@@ -15,6 +26,9 @@ while (<IN>) {
 
         # Check timezone
         next unless ($t[2] =~ /^\w{3}:$/);
+
+        # Dave date/time info
+        $time = "$t[0]T$t[1]Z";
 
         # Split off receive path info
         @receive = split /,/, $t[3];
@@ -42,11 +56,20 @@ while (<IN>) {
         # Check longitude/Object symbol/Course
         next unless ($param[2] =~ /^(0\d{2}|1[0-7]\d|180)[0-5]\d\.\d{2}[EW]\S\d{3}$/);
 
+        # Save latitude & longitude
+        $param[1] =~ /.*([0-8]\d|90)[0-5]\d\.\d{2}[NS]/;
+        $lat = $1;
+        $param[2] =~ /^(0\d{2}|1[0-7]\d|180)[0-5]\d\.\d{2}[EW]/;
+        $lon = $1;
+
         # Check speed
         next unless ($param[3] =~ /^\d{3}$/);
 
         # Check altitude (feet)
         next unless ($param[4] =~ /^A=\d{6}((!\S{3}!)?)$/);
+        
+        # Save altitude
+        $ele = $param[4];
 
         # Grab additional fields until whitespace is hit (indicates end of line or notes)
         $i = 5;
@@ -79,6 +102,10 @@ while (<IN>) {
         $exit = 0 if ($param[$i - 1] =~ /^P=\d{5}$/);
         $exit = 0 if ($param[$i - 1] =~ /^[XYZ]=\d+((!\S{3}!)?)$/); 
         next if ($exit);
-
+        
         print $line;
-} 
+        print $time;
+        print $lat;
+        print $lon;
+        print $ele;
+}       
